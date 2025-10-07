@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: back
+data:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  Logging__LogLevel__Default: "Information"
+  Logging__LogLevel__Microsoft.AspNetCore: "Warning"
+  ASPNETCORE_URLS: "http://+:5000"
+  AllowedHosts: "*"
+  Cors__AllowedOrigins:
+    - "https://filedump.ru/"
+    - "http://filedump.ru/"
+  MinioOptions__Endpoint: "http://192.168.0.102:9000"
+  MinioOptions__BucketName: "file-dump"

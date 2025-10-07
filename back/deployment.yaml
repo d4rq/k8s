@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  labels:
+    app: backend
+  namespace: back
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: d4rq/file-dump:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: ASPNETCORE_ENVIRONMENT
+        - name: ASPNETCORE_URLS
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: ASPNETCORE_URLS
+        - name: Logging__LogLevel__Default
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: Logging__LogLevel__Default
+        - name: ConnectionStrings__Postgres
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: database-connection
+        - name: JwtOptions__SecretKey
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: jwt-secret
+        - name: MinioOptions__Endpoint
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: MinioOptions__Endpoint
+        - name: MinioOptions__BucketName
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: MinioOptions__BucketName
+        - name: MinioOptions__AccessKey
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: minio-access-key
+        - name: MinioOptions__SecretKey
+          valueFrom:
+            secretKeyRef:
+              name: backend-secret
+              key: minio-secret-key
