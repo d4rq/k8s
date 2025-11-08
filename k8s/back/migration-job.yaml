@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrations
+  namespace: back
+spec:
+  template:
+    spec:
+      containers:
+      - name: migrations-job
+        image: d4rq/note:latest
+        command: ["dotnet", "Note.Api.Web.dll", "migrate"]
+        env:
+            - name: ConnectionStrings__Postgres
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: connection-string
+      restartPolicy: Never
+  backoffLimit: 4

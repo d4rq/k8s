@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: back
+  labels:
+    app: back-pod
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: d4rq/note:latest
+        ports:
+        - containerPort: 8080
+        env:
+          - name: ConnectionStrings__Postgres
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: connection-string
+          - name: ASPNETCORE_ENVIRONMENT
+            valueFrom:
+              configMapKeyRef:
+                name: backend-config
+                key: environment
+          - name: JwtOptions__SecretKey
+            valueFrom:
+              secretKeyRef:
+                name: backend-secret
+                key: jwt-secret
+          - name: Cors__AllowedOrigins:0
+            valueFrom:
+              configMapKeyRef:
+                name: backend-config
+                key: allowed-origin
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
