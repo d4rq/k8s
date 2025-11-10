@@ -7,9 +7,9 @@ service:
     protocol: TCP
 
 secret:
-  username: postgres
-  password: postgresmaster
-  database: note
+  username: ref+vault://secrets/db#/username
+  password: ref+vault://secrets/db#/password
+  database: ref+vault://secrets/db#/database
 
 config: {}
 
