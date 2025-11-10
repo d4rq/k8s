@@ -1,0 +1,34 @@
+service:
+  type: ClusterIP
+  port:
+    name: postgresql
+    port: 5432
+    targetPort: postgresql
+    protocol: TCP
+
+secret:
+  username: postgres
+  password: postgresmaster
+  database: note
+
+config: {}
+
+statefulSet:
+  replicas: 1
+  imagePullPolicy: IfNotPresent
+  image:
+    name: postgres
+    tag: 17
+  pvc:
+    name: data
+    mountPath: /bitnami/postgresql
+    accessMode: ReadWriteOnce
+    storage: 1Gi
+  env:
+    values:
+      PGDATA: /bitnami/postgresql/data
+    secrets:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: database
+    config: {}

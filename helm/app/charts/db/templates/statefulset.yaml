@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: "{{ .Chart.Name }}-sts"
+  labels:
+{{ include "db.labels" . | indent 4 }}
+spec:
+  serviceName: "{{ .Chart.Name }}-svc"
+  replicas: {{ .Values.statefulSet.replicas }}
+  selector:
+    matchLabels:
+{{- include "db.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+{{- include "db.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - {{- with .Values.service.port }}
+          name: {{ .name }}
+          {{- end }}
+          {{- with .Values.statefulSet.image }}
+          image: "{{ .name }}:{{ .tag }}"
+          {{- end }}
+          imagePullPolicy: {{ .Values.statefulSet.imagePullPolicy | quote }}
+          env:
+            {{- range $key, $val := .Values.statefulSet.env.values }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- range $key, $val := .Values.statefulSet.env.secrets }}
+            - name: {{ $key }}
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ $.Chart.Name }}-secrets"
+                  key: {{ $val }}
+            {{- end }}
+            {{- range $key, $val := .Values.statefulSet.env.config }}
+            - name: {{ $key }}
+              valueFrom:
+                configMapKeyRef:
+                  name: "{{ $.Chart.Name }}-configmap"
+                  key: {{ $val }}
+            {{- end }}
+          {{- with .Values.service.port }}
+          ports:
+            - name: {{ .name }}
+              containerPort: {{ .port }}
+              protocol: {{ .protocol }}
+          {{- end }}
+          {{- with .Values.statefulSet.pvc }}
+          volumeMounts:
+            - name: {{ .name }}
+              mountPath: {{ .mountPath }}
+          {{- end }}
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - note
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+                - -d
+                - note
+            initialDelaySeconds: 30
+            periodSeconds: 30
+  volumeClaimTemplates:
+    {{- with .Values.statefulSet.pvc }}
+    - metadata:
+        name: {{ .name }}
+      spec:
+        accessModes:
+          - {{ .accessMode | quote }}
+        resources:
+          requests:
+            storage: {{ .storage | quote }}
+    {{- end }}

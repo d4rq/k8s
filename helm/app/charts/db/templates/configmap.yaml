@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Chart.Name }}-config
+  labels:
+{{ include "db.labels" . | indent 4 }}
+data:
+  host: "{{ .Chart.Name }}-svc.{{ .Release.Namespace }}.svc.cluster.local"
+  port: {{ .Values.service.port | quote }}
+  {{- range $key, $value := .Values.config }}
+    {{ $key }}: {{ $value}}
+  {{- end }}

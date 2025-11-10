@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "backend.fullname" . }}-migration
+spec:
+  template:
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-migration
+        image: {{ .Values.migration.image.name }}:{{ .Values.migration.image.tag }}
+        command: ["dotnet", "Note.Api.Web.dll", "migrate"]
+        env:
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
+      restartPolicy: Never
+  backoffLimit: 4

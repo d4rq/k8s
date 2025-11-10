@@ -1,0 +1,28 @@
+service:
+  type: NodePort
+  port:
+    port: 80
+    targetPort: 8080
+
+secret:
+  connection-string: &db-connecton "Host=db-svc.default.svc.cluster.local;Port=5432;Database=note;Username=postgres;Password=postgresmaster;"
+
+deployment:
+  replicas: 3
+  image: &backend-image
+    name: d4rq/note
+    tag: latest
+  env:
+    ASPNETCORE_ENVIRONMENT: Development
+    ASPNETCORE_URLS: http://+:8080
+    ConnectionStrings__Postgres: *db-connecton
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+migration:
+  image: *backend-image
+  env:
+    ConnectionStrings__Postgres: *db-connecton
