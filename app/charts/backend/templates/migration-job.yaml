@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "backend.fullname" . }}-migration
+  namespace: {{ .Values.namespace }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}-migration
+        image: {{ .Values.migration.image.name }}:{{ .Values.migration.image.tag }}
+        command: ["dotnet", "Note.Api.Web.dll", "migrate"]
+        env:
+          {{- range $key, $val := .Values.migration.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
+          - name: ConnectionStrings__Postgres
+            value: |-
+                Host=postgres-postgresql.postgres.svc.cluster.local;Port=5432;
+                Database={{ .Values.secrets.database }} ;
+                Username={{ .Values.secrets.username }} ;
+                Password={{ .Values.secrets.password }} ;
+      restartPolicy: Never
+  backoffLimit: 4

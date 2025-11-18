@@ -1,0 +1,4 @@
+auth:
+  username: ref+vault://secrets/db#/username
+  password: ref+vault://secrets/db#/password
+  database: ref+vault://secrets/db#/database

@@ -1,0 +1,25 @@
+deployment:
+  replicas: 2
+  image:
+    name: d4rq/consumer
+    tag: latest
+  env:
+    ASPNETCORE_ENVIRONMENT: Development
+    ASPNETCORE_URLS: http://+:8080
+    RabbitMq__Host: rabbitmq.rabbitmq.svc.cluster.local
+    RabbitMq__Username: ref+vault://secrets/rabbitmq#/username
+    RabbitMq__Password: ref+vault://secrets/rabbitmq#/password
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+
+service:
+  type: NodePort
+  port:
+    port: 80
+    targetPort: 8080
+
+namespace: consumer

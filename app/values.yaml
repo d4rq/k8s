@@ -1,0 +1,76 @@
+backend:
+  service:
+    type: NodePort
+    port:
+      port: 80
+      targetPort: 8080
+  secrets:
+    username: ref+vault://secrets/db#/username
+    password: ref+vault://secrets/db#/password
+    database: ref+vault://secrets/db#/database
+  deployment:
+    replicas: 3
+    image: &backend-image
+      name: d4rq/note
+      tag: latest
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      RabbitMq__Host: rabbitmq.rabbitmq.svc.cluster.local
+      RabbitMq__Username: ref+vault://secrets/rabbitmq#/username
+      RabbitMq__Password: ref+vault://secrets/rabbitmq#/password
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
+        maxSurge: 1
+  migration:
+    image: *backend-image
+    env:
+  namespace: app
+
+frontend:
+  replicas: 2
+  image:
+    name: d4rq/note-front
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+  env:
+    VITE_API_BASE_URL: "http://api.note.ru"
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  namespace: app
+
+consumer:
+  deployment:
+    replicas: 2
+    image:
+      name: d4rq/consumer
+      tag: latest
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      RabbitMq__Host: rabbitmq.rabbitmq.svc.cluster.local
+      RabbitMq__Username: ref+vault://secrets/rabbitmq#/username
+      RabbitMq__Password: ref+vault://secrets/rabbitmq#/password
+    strategy:
+      type: RollingUpdate
+      rollingUpdate:
+        maxUnavailable: 1
+        maxSurge: 1
+  service:
+    type: NodePort
+    port:
+      port: 80
+      targetPort: 8080
+  namespace: consumer
+
+ingress:
+  namespace: app

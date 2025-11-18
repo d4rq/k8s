@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backend.fullname" . }}-deployment
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "backend.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.deployment.replicas }}
+  selector:
+    matchLabels:
+{{- include "backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+{{- include "backend.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ .Chart.Name }}
+        image: {{ .Values.deployment.image.name }}:{{ .Values.deployment.image.tag }}
+        ports:
+        - containerPort: {{ .Values.service.port.targetPort }}
+        env:
+          {{- range $key, $val := .Values.deployment.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
+          - name: ConnectionStrings__Postgres
+            value: |-
+                Host=postgres-postgresql.postgres.svc.cluster.local;Port=5432;
+                Database={{ .Values.secrets.database }} ;
+                Username={{ .Values.secrets.username }} ;
+                Password={{ .Values.secrets.password }} ;
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+  {{- with .Values.deployment.strategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
